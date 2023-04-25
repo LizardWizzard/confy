@@ -1,0 +1,37 @@
+[pull]
+    ff = only
+[pager]
+    diff = delta
+    log = delta
+    reflog = delta
+    show = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    features = line-numbers decorations
+    whitespace-error-style = 22 reverse
+
+[delta "decorations"]
+    commit-decoration-style = bold yellow box ul
+    file-style = bold yellow ul
+    file-decoration-style = none
+[user]
+  name = Dmitry Rodionov
+  email = captfrozenberg@gmail.com
+[push]
+	default = current
+[status]
+  showUntrackedFiles = no
+[core]
+	editor = vi
+[safe]
+	directory = /home/dr/checkout/bcc
+	directory = /home/dr/checkout/bcc/libbpf-tools/blazesym
+	directory = /home/dr/checkout/bcc/src/cc/libbpf
+	directory = /home/dr/checkout/bcc/libbpf-tools/bpftool
+	directory = /home/dr/checkout/bcc
+	directory = /home/dr/checkout/bcc/libbpf-tools/blazesym
+	directory = /home/dr/checkout/bcc/src/cc/libbpf
+	directory = /home/dr/checkout/bcc/libbpf-tools/bpftool
