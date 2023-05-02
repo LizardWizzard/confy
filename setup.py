@@ -1,13 +1,15 @@
 import argparse
+import enum
 import subprocess
 from pathlib import Path
 import textwrap
 
-CONFIGS = Path(__file__) / "configs"
+CONFIGS = Path(__file__).parent / "configs"
+ZSH_HOME = Path("~/.zsh")
 
 
 def run(cmd: str):
-    subprocess.check_call(cmd, shell=True)
+    subprocess.check_call(cmd, shell=True, stdout=subprocess.PIPE)
 
 
 def clone_to(repo: str, to: Path):
@@ -16,96 +18,142 @@ def clone_to(repo: str, to: Path):
     run(f"git clone --depth=1 {repo} {dest}")
 
 
-def wget_to(url: str, to: Path):
+def curl_to(url: str, to: Path):
     file_name = Path(url).name
     dest = to / file_name
-    run(f"wget {url} {dest}")
+    run(f"curl {url} > {dest}")
 
 
-def link(src: Path, dst: Path):
-    run(f"ln -s {src} {dst}")
+def link(src: Path, dst: Path, sudo: bool = False):
+    if sudo:
+        run(f"sudo ln -s {src} {dst}")
+    else:
+        run(f"ln -s {src} {dst}")
 
 
-def link_home(file: Path):
-    dst = Path(f"~/{file.name}")
-    link(file, dst)
+def link_home(path: Path):
+    dst = Path(f"~/{path.name}")
+    link(path, dst)
+
+
+def dnf_install(*args):
+    pkgs = " ".join(args)
+    run(f"sudo dnf install -y {pkgs}")
+
+
+def install_pre():
+    dnf_install(
+        "which",
+        "git",
+        "'dnf-command(copr)'",
+        "gcc",
+        "libgit2-devel",
+        "libcurl-devel",
+        "libssh2-devel",
+        "openssl-devel",
+        "pkg-config",
+    )
 
 
 def install_zsh():
     # Install zsh package
-    run("sudo dnf install zsh")
+    dnf_install("zsh")
 
     # Link config file
     link_home(CONFIGS / ".zshrc")
 
     # set as default shell
-    run("sudo dnf install util-linux-user")
+    dnf_install("util-linux-user")
+    run("which zsh")
     run("chsh -s $(which zsh)")
 
     # Create directory for plugins
-    run("mkdir ~/.zsh")
+    run(f"mkdir {ZSH_HOME}")
 
     # Install powerlevel10k
-    clone_to("https://github.com/romkatv/powerlevel10k.git", "~/.zsh")
+    clone_to("https://github.com/romkatv/powerlevel10k.git", ZSH_HOME)
     # Install powerlevel10k config
     link_home(CONFIGS / ".p10k.zsh")
 
     # Install syntax highlighting
-    clone_to("https://github.com:zdharma/fast-syntax-highlighting.git", "~/.zsh")
+    clone_to("https://github.com/zdharma/fast-syntax-highlighting.git", ZSH_HOME)
 
     # Install completions
-    wget_to(
+    curl_to(
         "https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/lib/completion.zsh",
-        "~/.zsh",
+        ZSH_HOME,
     )
 
     # Install autosuggestions
-    clone_to("https://github.com/zsh-users/zsh-autosuggestions.git", "~/.zsh")
+    clone_to("https://github.com/zsh-users/zsh-autosuggestions.git", ZSH_HOME)
 
     # Install history
-    wget_to(
+    curl_to(
         "https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/lib/history.zsh",
-        "~/.zsh",
+        ZSH_HOME,
     )
 
     # Install keybindings
-    wget_to(
+    curl_to(
         "https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/lib/key-bindings.zsh",
-        "~/.zsh",
+        ZSH_HOME,
     )
 
 
 def install_py():
     # Install pyenv
     run("curl https://pyenv.run | bash")
-    run("sudo dnf install bzip2-devel sqlite-devel libffi-devel")
+    dnf_install("bzip2-devel", "sqlite-devel", "libffi-devel")
 
     # Install poetry
     run("curl -sSL https://install.python-poetry.org | python3 -")
 
 
 def install_rust():
-    run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh")
+    # Install rust with rustup
+    run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
+
+    # Install tools
+    tools = [
+        "cargo-asm",
+        "cargo-bloat",
+        "cargo-nextest",
+        "cargo-nextest",
+        "cargo-update",
+        "flamegraph",
+    ]
+    for tool in tools:
+        # Full path because shell config with PATH adjustments is not applied yet
+        run(f"~/.cargo/bin/cargo install {tool}")
 
 
 def install_misc():
-    tools = " ".join(["exa", "fzf", "ripgrep", "dua-cli", "git-delta"])
-    run(f"sudo dnf install {tools}")
+    dnf_install(
+        "exa",
+        "fzf",
+        "ripgrep",
+        "dua-cli",
+        "git-delta",
+        "htop",
+    )
 
     # Install Just
-    run("sudo dnf install just")
+    dnf_install("just")
     run("just --completions zsh > ~/.zsh/just.zsh")
 
+    dnf_install("vim")
 
-def install_gitconfig():
+
+def install_gitconf():
     link_home(CONFIGS / ".gitconfig")
 
 
-def install_gdbconfig():
+def install_gdbconf():
     link_home(CONFIGS / ".gdbinit")
 
 
 def install_vbox():
+    return
     # Add repo
     script = textwrap.dedent(
         """
@@ -132,6 +180,7 @@ def install_vbox():
 
 
 def install_vagrant():
+    return
     run("dnf install vagrant")
 
 
@@ -151,10 +200,31 @@ def install_kubectl():
     )
     run(script)
 
-    run("dnf install kubectl")
+    dnf_install("kubectl")
 
 
-def install():
+def install_vim():
+    dnf_install("vim")
+
+    link_home(CONFIGS / ".vimrc")
+
+
+def install_helix():
+    run("sudo dnf copr enable varlad/helix -y")
+    dnf_install("helix")
+
+    run("mkdir -p ~/.config/helix/")
+    link(CONFIGS / "helix.toml", Path("~/.config/helix/config.toml"))
+    # do the same for root
+    # run("sudo mkdir -p /root/.config/helix/")
+    # link(
+    #     CONFIGS / "helix.toml", Path("/home/root/.config/helix/config.toml"), sudo=True
+    # )
+
+
+def install(args):
+    install_pre()
+
     install_zsh()
 
     install_py()
@@ -163,23 +233,30 @@ def install():
 
     install_misc()
 
-    install_gitconfig()
+    install_gitconf()
 
-    install_gdbconfig()
-
-    install_vbox()
-
-    install_vagrant()
+    install_gdbconf()
 
     install_kubectl()
 
+    install_vim()
 
-# TODO helix
-# TODO rust, rust tools (look at ~/.cargo/bin)
+    install_helix()
 
 
 def update():
-    pass
+    run("sudo dnf update -y")
+    run("cargo install-update -a")
+    run("rustup update")
+
+
+class InstallStage(enum.Enum):
+    ALL = "all"
+    ZSH = "zsh"
+    PY = "py"
+    RUST = "rust"
+    MISC = "misc"
+    GITCONF = "gitconf"
 
 
 def main():
@@ -189,6 +266,7 @@ def main():
     install_parser = sub.add_parser(
         "install",
     )
+    install_parser.add_argument("--stage", default="all", required=False)
 
     update_parser = sub.add_parser("update")
 
@@ -204,3 +282,7 @@ def main():
         handler(args)
     else:
         parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

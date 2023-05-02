@@ -42,7 +42,7 @@ source $HOME/.zsh/fast-syntax-highlighting/F-Sy-H.plugin.zsh
 source $HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 source $HOME/.zsh/history.zsh
 # source $HOME/.zsh/key-bindings.zsh
-source $HOME/.zsh/just.zsh
+# source $HOME/.zsh/just.zsh
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -93,12 +93,4 @@ alias ll='exa -alF --all'
 source /usr/share/fzf/shell/key-bindings.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-# Neon specific
-# Teleport
-export TELEPORT_PROXY=teleport.aws.neon.tech
-# export TELEPORT_LOGIN=admin
-# Loki
-export LOKI_ADDR=https://observer.zenith.tech/
-eval "$(logcli --completion-script-zsh)"
-
-
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local

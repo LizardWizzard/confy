@@ -1,0 +1,7 @@
+# Neon specific
+# Teleport
+export TELEPORT_PROXY=teleport.aws.neon.tech
+# export TELEPORT_LOGIN=admin
+# Loki
+export LOKI_ADDR=https://observer.zenith.tech/
+eval "$(logcli --completion-script-zsh)"
