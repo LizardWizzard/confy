@@ -52,6 +52,10 @@ def install_pre():
         "libssh2-devel",
         "openssl-devel",
         "pkg-config",
+        "ncurses-devel",
+        "readline-devel",
+        "lzma-sdk-devel",
+        "tk-devel",
     )
 
 
@@ -222,6 +226,12 @@ def install_helix():
     # )
 
 
+def install_vscode_extensions():
+    lines = (CONFIGS / "vs-code-extensions.txt").read_text().splitlines()
+    for line in lines:
+        run(f"code --install-extension {line}")
+
+
 def install(args):
     install_pre()
 
@@ -242,6 +252,8 @@ def install(args):
     install_vim()
 
     install_helix()
+
+    install_vscode_extensions()
 
 
 def update():
