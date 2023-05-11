@@ -226,7 +226,12 @@ def install_helix():
     # )
 
 
-def install_vscode_extensions():
+def install_vscode():
+    run("sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc")
+    run("sudo sh -c 'echo -e \"[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc\" > /etc/yum.repos.d/vscode.repo'")
+    run("dnf check-update")
+    run("sudo dnf install code")
+
     lines = (CONFIGS / "vs-code-extensions.txt").read_text().splitlines()
     for line in lines:
         run(f"code --install-extension {line}")
@@ -253,7 +258,7 @@ def install(args):
 
     install_helix()
 
-    install_vscode_extensions()
+    install_vscode()
 
 
 def update():
