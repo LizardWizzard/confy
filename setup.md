@@ -339,3 +339,7 @@ dnf install mold
 ### Virtual Desktops Only On Primary (KDE)
 
 https://askubuntu.com/questions/102294/how-to-fix-one-virtual-desktop-to-my-second-monitor-with-kde/1399798#1399798
+
+### Custom spectacle shortcut
+
+https://forum.kde.org/viewtopic.php?t=140137
