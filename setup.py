@@ -122,7 +122,6 @@ def install_rust():
         "cargo-asm",
         "cargo-bloat",
         "cargo-nextest",
-        "cargo-nextest",
         "cargo-update",
         "flamegraph",
     ]
@@ -161,7 +160,7 @@ def install_vbox():
     # Add repo
     script = textwrap.dedent(
         """
-        cat <<EOF | sudo tee /etc/yum.repos.d/virtualbox.repo 
+        cat <<EOF | sudo tee /etc/yum.repos.d/virtualbox.repo
         [virtualbox]
         name=Fedora $releasever - $basearch - VirtualBox
         baseurl=http://download.virtualbox.org/virtualbox/rpm/fedora/36/\$basearch

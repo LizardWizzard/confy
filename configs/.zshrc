@@ -58,6 +58,7 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
 export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:/usr/share/bcc/tools
 
 source "$HOME/.cargo/env"
 
@@ -67,6 +68,7 @@ alias gd='git diff'
 alias gco='git checkout'
 alias gst='git status'
 alias glg='git log'
+alias glgo='git log --oneline'
 alias glgs='git log --stat'
 alias gp='git push'
 alias gpfl='git push --force-with-lease'
