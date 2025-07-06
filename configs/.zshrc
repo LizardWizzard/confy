@@ -96,3 +96,7 @@ source /usr/share/fzf/shell/key-bindings.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
+
+bindkey "^[[1;5C" forward-word
+bindkey "^[[1;5D" backward-word
