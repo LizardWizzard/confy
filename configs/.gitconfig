@@ -20,12 +20,13 @@
 [user]
   name = Dmitry Rodionov
   email = captfrozenberg@gmail.com
+	signingkey = /home/dr/.ssh/picogit_new.pub
 [push]
 	default = current
 [status]
   showUntrackedFiles = no
 [core]
-	editor = vi
+	editor = vim
 [safe]
 	directory = /home/dr/checkout/bcc
 	directory = /home/dr/checkout/bcc/libbpf-tools/blazesym
@@ -44,6 +45,7 @@
         sort = -committerdate
 [tag]
         sort = version:refname
+	gpgsign = false
 [diff]
         algorithm = histogram
         colorMoved = plain
@@ -57,6 +59,7 @@
         prune = true
         pruneTags = true
         all = true
+	parallel = 16
 
 # why the hell not?
 
@@ -72,6 +75,8 @@
 [rebase]
         autoSquash = true
         autoStash = true
-        updateRefs = true
+        # updateRefs = true
 [submodule]
 	fetchJobs = 16
+[gpg]
+	format = ssh

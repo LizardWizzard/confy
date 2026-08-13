@@ -74,6 +74,8 @@ alias gp='git push'
 alias gpfl='git push --force-with-lease'
 alias grbc='git rebase --continue'
 alias grba='git rebase --abort'
+alias gcpc='git cherry-pick --continue'
+alias gcpa='git cherry-pick --abort'
 alias gb='git branch'
 alias gfp='git fetch --prune'
 alias gcan='git commit -a --amend --no-edit'
@@ -89,8 +91,8 @@ alias newkey='ssh-keygen -t ed25519 -a 100 -f'
 
 alias j='just'
 
-alias ls='exa --all'
-alias ll='exa -alF --all'
+alias ls='eza --all'
+alias ll='eza -alF --all'
 
 source /usr/share/fzf/shell/key-bindings.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
