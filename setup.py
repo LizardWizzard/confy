@@ -1,11 +1,15 @@
 import argparse
 import enum
+import re
 import subprocess
+import sys
 from pathlib import Path
 import textwrap
+import time
 
 CONFIGS = Path(__file__).parent / "configs"
 ZSH_HOME = Path("~/.zsh")
+CLAUDE_HOME = Path("~/.claude")
 
 
 def run(cmd: str):
@@ -236,6 +240,51 @@ def install_vscode():
         run(f"code --install-extension {line}")
 
 
+def save_claude_token(settings: Path):
+    # The token lives in the Secret Service keyring (gnome-keyring on GNOME,
+    # KWallet's Secret Service bridge on KDE). settings.json reaches it via
+    # apiKeyHelper pointing at the lookup script this writes.
+    script = (CLAUDE_HOME / "api-key.sh").expanduser()
+    if script.exists():
+        return
+
+    token = None
+    if settings.is_file():
+        match = re.search(r'"ANTHROPIC_AUTH_TOKEN"\s*:\s*"([^"]+)"', settings.read_text())
+        if match:
+            token = match.group(1)
+            assert re.fullmatch(r"[\w.-]+", token), f"unexpected token format: {token}"
+
+    if token is None:
+        sys.exit(
+            f"{script} is missing. Store the token in the keyring, then create {script}:\n"
+            '  printf %s "TOKEN" | secret-tool store --label="Z.ai Claude Code token"'
+            " service zai account claude-code\n"
+            f"  printf '#!/bin/sh\\nsecret-tool lookup service zai account claude-code\\n' > {script} && chmod 700 {script}"
+        )
+
+    run(
+        f'secret-tool store --label="Z.ai Claude Code token" service zai account claude-code <<< "{token}"'
+    )
+    script.write_text(
+        "#!/bin/sh\nsecret-tool lookup service zai account claude-code\n"
+    )
+    script.chmod(0o700)
+
+
+def install_claude():
+    settings = (CLAUDE_HOME / "settings.json").expanduser()
+    save_claude_token(settings)
+
+    if settings.is_symlink():
+        settings.unlink()
+    elif settings.exists():
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        settings.rename(settings.with_name(f"settings.json.pre-confy-{stamp}"))
+
+    link(CONFIGS / "claude-settings.json", Path("~/.claude/settings.json"))
+
+
 def install(args):
     install_pre()
 
@@ -259,6 +308,8 @@ def install(args):
 
     install_vscode()
 
+    install_claude()
+
 
 def update():
     run("sudo dnf update -y")
@@ -273,6 +324,7 @@ class InstallStage(enum.Enum):
     RUST = "rust"
     MISC = "misc"
     GITCONF = "gitconf"
+    CLAUDE = "claude"
 
 
 def main():

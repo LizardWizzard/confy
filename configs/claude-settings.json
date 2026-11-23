@@ -1,0 +1,80 @@
+{
+  "apiKeyHelper": "~/.claude/api-key.sh",
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+    "API_TIMEOUT_MS": "3000000",
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "1000000",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5.3[1m]",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL_NAME": "GLM-5.3",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-5.3-flash[1m]",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL_NAME": "GLM-5.3-Flash",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-5.3-flash[1m]"
+  },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "model": "glm-5.4[1m]",
+  "modelPicker": {
+    "options": [
+      {
+        "model": "glm-5.4[1m]",
+        "label": "GLM-5.4",
+        "description": "Z.ai newest · multimodal · 1M context",
+        "behavesAs": "claude-opus-5-5"
+      },
+      {
+        "model": "glm-5.3[1m]",
+        "label": "GLM-5.3",
+        "description": "Z.ai flagship · text-only · 1M context",
+        "behavesAs": "claude-opus-5-5"
+      },
+      {
+        "model": "glm-5.3-flash[1m]",
+        "label": "GLM-5.3-Flash",
+        "description": "Z.ai fast · multimodal · 1M context",
+        "behavesAs": "claude-sonnet-5-5"
+      },
+      {
+        "model": "glm-5.2[1m]",
+        "label": "GLM-5.2",
+        "description": "Z.ai previous gen · 1M context",
+        "behavesAs": "claude-sonnet-5-5"
+      }
+    ],
+    "replaceBuiltInOptions": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat)\ncwd=$(printf '%s' \"$input\" | jq -r '.workspace.current_dir')\nmodel=$(printf '%s' \"$input\" | jq -r '.model.display_name')\nrem=$(printf '%s' \"$input\" | jq -r '.context_window.remaining_percentage // empty')\nd=$cwd\ncase $d in \"$HOME\") d=\"~\" ;; \"$HOME\"/*) d=\"~${d#\"$HOME\"}\" ;; esac\nline=$(printf '\\033[38;5;31m%s\\033[0m' \"$d\")\nst=$(git -C \"$cwd\" --no-optional-locks status --porcelain=v2 --branch 2>/dev/null)\nif [ -n \"$st\" ]; then\ng=$(printf '%s\\n' \"$st\" | awk '\nBEGIN{c76=\"\\033[38;5;76m\";c178=\"\\033[38;5;178m\";c39=\"\\033[38;5;39m\";c196=\"\\033[38;5;196m\";c244=\"\\033[38;5;244m\";r=\"\\033[0m\"}\n/^# branch\\.head /{h=$3; if(h!=\"(detached)\"){if(length(h)>32)h=substr(h,1,12)\"..\"substr(h,length(h)-11); res=res c76 h r; bh=1}}\n/^# branch\\.oid /{oid=$3}\n/^# branch\\.ab /{split($3,x,\"+\"); ahead=0+x[2]; split($4,y,\"-\"); behind=0+y[2]}\n/^\\?/{u++} /^u /{cf++} /^[12] /{xy=substr($0,3,2); if(substr(xy,1,1)!=\".\")s++; if(substr(xy,2,1)!=\".\")m++}\nEND{\nif(bh!=1 && oid!=\"\") res=c244 \"@\" r c76 substr(oid,1,8) r\nsfx=\"\"\nif(behind>0) sfx=\"<\" behind\nif(ahead>0) sfx=sfx \">\" ahead\nif(sfx!=\"\") res=res \" \" c76 sfx r\nif(s>0) res=res \" \" c178 \"+\" s r\nif(m>0) res=res \" \" c178 \"!\" m r\nif(cf>0) res=res \" \" c196 \"~\" cf r\nif(u>0) res=res \" \" c39 \"?\" u r\nprint res\n}')\nns=$(git -C \"$cwd\" stash list 2>/dev/null | wc -l)\n[ \"$ns\" -gt 0 ] && g=\"$g $(printf '\\033[38;5;76m*%s\\033[0m' \"$ns\")\"\nline=\"$line $g\"\nfi\n[ -n \"$model\" ] && line=\"$line $(printf '\\033[38;5;101m%s\\033[0m' \"$model\")\"\n[ -n \"$rem\" ] && line=\"$line $(printf '\\033[38;5;66mctx %s%%\\033[0m' \"$(awk -v r=\"$rem\" 'BEGIN{printf \"%d\",100-r}')\")\"\nzc(){ case $1 in ''|*[!0-9]*) echo 244 ;; *) if [ \"$1\" -ge 85 ]; then echo 196; elif [ \"$1\" -ge 60 ]; then echo 178; else echo 76; fi ;; esac; }\ntok=$(jq -r '.env.ANTHROPIC_AUTH_TOKEN // empty' \"$HOME/.claude/settings.json\")\n[ -z \"$tok\" ] && tok=$(\"$HOME/.claude/api-key.sh\" 2>/dev/null)\nq=\"\"\nif [ -n \"$tok\" ]; then\ncf=\"${TMPDIR:-/tmp}/zai-quota-$(id -u).json\"\nnow=$(date +%s)\nmt=$(stat -c %Y \"$cf\" 2>/dev/null || echo 0)\n[ -f \"$cf\" ] && q=$(cat \"$cf\" 2>/dev/null)\ncl=\"$cf.fetching\"\nlmt=$(stat -c %Y \"$cl\" 2>/dev/null || echo 0)\nif [ $((now - mt)) -ge 120 ] && { [ ! -f \"$cl\" ] || [ $((now - lmt)) -ge 30 ]; }; then\n: > \"$cl\" 2>/dev/null\nnohup sh -c 'r=$(curl -sf --max-time 10 -H \"Authorization: $1\" \"https://api.z.ai/api/monitor/usage/quota/limit\" 2>/dev/null); if [ -n \"$r\" ]; then printf \"%s\" \"$r\" > \"$2\" && mv -f \"$2\" \"$3\"; fi; rm -f \"$4\"' sh \"$tok\" \"$cf.$$\" \"$cf\" \"$cl\" >/dev/null 2>&1 </dev/null &\nfi\nfi\nif [ -n \"$q\" ]; then\nvals=$(printf '%s' \"$q\" | jq -r '[[.data.limits[]? | select(.unit==3 and .number==5)][0].percentage // -1, [.data.limits[]? | select(.unit==6 and .number==1)][0].percentage // -1] | join(\" \")')\np5=${vals%% *}\npw=${vals##* }\nz=\"\"\ncase $p5 in ''|*[!0-9]*) ;; *) z=\"$z$(printf '\\033[38;5;%sm5h %s%%\\033[0m ' \"$(zc \"$p5\")\" \"$p5\")\" ;; esac\ncase $pw in ''|*[!0-9]*) ;; *) z=\"$z$(printf '\\033[38;5;%smwk %s%%\\033[0m' \"$(zc \"$pw\")\" \"$pw\")\" ;; esac\nz=${z% }\n[ -n \"$z\" ] && line=\"$line $(printf '\\033[38;5;101mglm\\033[0m') $z\"\nfi\nline=\"$line $(printf '\\033[38;5;66m%s\\033[0m' \"$(date +%H:%M:%S)\")\"\nprintf '%s\\n' \"$line\""
+  },
+  "enabledPlugins": {
+    "rust-analyzer-lsp@claude-plugins-official": true
+  },
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "high"
+    },
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
+  },
+  "tui": "fullscreen",
+  "preferredNotifChannel": "terminal_bell",
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true
+}
