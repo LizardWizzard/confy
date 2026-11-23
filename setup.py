@@ -1,15 +1,27 @@
 import argparse
-import enum
 import re
 import subprocess
 import sys
 from pathlib import Path
 import textwrap
 import time
+import tomllib
 
 CONFIGS = Path(__file__).parent / "configs"
 ZSH_HOME = Path("~/.zsh")
 CLAUDE_HOME = Path("~/.claude")
+CODEX_HOME = Path("~/.codex")
+
+# Shared by both agents (telegram/desktop notifications, session memory limit).
+# herdr-agent-state.sh is managed by herdr itself and stays out of the repo.
+AGENT_HOOK_SCRIPTS = ["telegram-notify.sh", "desktop-notify.sh", "session-memlimit.sh"]
+
+# model_providers.<name>.experimental_bearer_token in an existing codex
+# config.toml is migrated into the keyring under (service, account).
+CODEX_TOKEN_KEYRINGS = {
+    "ZAI": ("zai", "codex"),
+    "deepseek": ("aitunnel", "codex"),
+}
 
 
 def run(cmd: str):
@@ -240,6 +252,23 @@ def install_vscode():
         run(f"code --install-extension {line}")
 
 
+def backup_and_link(src: Path, dst: Path):
+    """Replace dst with a symlink to src, backing up a real file if present."""
+    if dst.is_symlink():
+        dst.unlink()
+    elif dst.exists():
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        dst.rename(dst.with_name(f"{dst.name}.pre-confy-{stamp}"))
+    link(src, dst)
+
+
+def install_agent_hooks(hooks_dir: Path):
+    hooks_dir = hooks_dir.expanduser()
+    run(f"mkdir -p {hooks_dir}")
+    for name in AGENT_HOOK_SCRIPTS:
+        backup_and_link(CONFIGS / "agent-hooks" / name, hooks_dir / name)
+
+
 def save_claude_token(settings: Path):
     # The token lives in the Secret Service keyring (gnome-keyring on GNOME,
     # KWallet's Secret Service bridge on KDE). settings.json reaches it via
@@ -276,55 +305,87 @@ def install_claude():
     settings = (CLAUDE_HOME / "settings.json").expanduser()
     save_claude_token(settings)
 
-    if settings.is_symlink():
-        settings.unlink()
-    elif settings.exists():
-        stamp = time.strftime("%Y%m%d-%H%M%S")
-        settings.rename(settings.with_name(f"settings.json.pre-confy-{stamp}"))
+    backup_and_link(CONFIGS / "claude-settings.json", settings)
+    install_agent_hooks(CLAUDE_HOME / "hooks")
 
-    link(CONFIGS / "claude-settings.json", Path("~/.claude/settings.json"))
+
+def save_codex_tokens(config: Path):
+    # Migrate inline experimental_bearer_token values from an existing codex
+    # config.toml into the Secret Service keyring; the synced config fetches
+    # them via [model_providers.<id>.auth] -> ~/.codex/token.sh.
+    if not config.is_file():
+        return
+    with config.open("rb") as f:
+        try:
+            data = tomllib.load(f)
+        except tomllib.TOMLDecodeError:
+            return
+    for name, provider in data.get("model_providers", {}).items():
+        entry = CODEX_TOKEN_KEYRINGS.get(name)
+        token = provider.get("experimental_bearer_token")
+        if entry is None or not token:
+            continue
+        service, account = entry
+        assert re.fullmatch(r"[\w.-]+", token), f"unexpected token format for {name}"
+        run(
+            f'secret-tool store --label="codex {name} token" '
+            f'service {service} account {account} <<< "{token}"'
+        )
+
+
+def install_codex():
+    config = (CODEX_HOME / "config.toml").expanduser()
+    save_codex_tokens(config)
+
+    backup_and_link(CONFIGS / "codex-config.toml", config)
+    backup_and_link(CONFIGS / "codex-hooks.json", (CODEX_HOME / "hooks.json").expanduser())
+    backup_and_link(CONFIGS / "codex-token.sh", (CODEX_HOME / "token.sh").expanduser())
+    install_agent_hooks(CODEX_HOME / "hooks")
+
+
+STAGES = {
+    "all": [
+        install_pre,
+        install_zsh,
+        install_py,
+        install_rust,
+        install_misc,
+        install_gitconf,
+        install_gdbconf,
+        install_kubectl,
+        install_vim,
+        install_helix,
+        install_vscode,
+        install_claude,
+        install_codex,
+    ],
+    "zsh": [install_zsh],
+    "py": [install_py],
+    "rust": [install_rust],
+    "misc": [install_misc],
+    "gitconf": [install_gitconf],
+    "gdbconf": [install_gdbconf],
+    "kubectl": [install_kubectl],
+    "vim": [install_vim],
+    "helix": [install_helix],
+    "vscode": [install_vscode],
+    "claude": [install_claude],
+    "codex": [install_codex],
+}
 
 
 def install(args):
-    install_pre()
-
-    install_zsh()
-
-    install_py()
-
-    install_rust()
-
-    install_misc()
-
-    install_gitconf()
-
-    install_gdbconf()
-
-    install_kubectl()
-
-    install_vim()
-
-    install_helix()
-
-    install_vscode()
-
-    install_claude()
+    handlers = STAGES.get(args.stage)
+    if handlers is None:
+        sys.exit(f"unknown stage: {args.stage} (known: {', '.join(STAGES)})")
+    for handler in handlers:
+        handler()
 
 
 def update():
     run("sudo dnf update -y")
     run("cargo install-update -a")
     run("rustup update")
-
-
-class InstallStage(enum.Enum):
-    ALL = "all"
-    ZSH = "zsh"
-    PY = "py"
-    RUST = "rust"
-    MISC = "misc"
-    GITCONF = "gitconf"
-    CLAUDE = "claude"
 
 
 def main():
@@ -334,7 +395,9 @@ def main():
     install_parser = sub.add_parser(
         "install",
     )
-    install_parser.add_argument("--stage", default="all", required=False)
+    install_parser.add_argument(
+        "--stage", default="all", required=False, choices=sorted(STAGES)
+    )
 
     update_parser = sub.add_parser("update")
 
