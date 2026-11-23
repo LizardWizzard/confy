@@ -102,3 +102,6 @@ source /usr/share/fzf/shell/key-bindings.zsh
 
 bindkey "^[[1;5C" forward-word
 bindkey "^[[1;5D" backward-word
+
+# Added by GitButler installer
+eval "$(but completions zsh)"

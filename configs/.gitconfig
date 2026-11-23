@@ -80,3 +80,5 @@
 	fetchJobs = 16
 [gpg]
 	format = ssh
+[init]
+	defaultBranch = master
