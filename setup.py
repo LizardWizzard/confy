@@ -311,8 +311,8 @@ def install_claude():
 
 def save_codex_tokens(config: Path):
     # Migrate inline experimental_bearer_token values from an existing codex
-    # config.toml into the Secret Service keyring; the synced config fetches
-    # them via [model_providers.<id>.auth] -> ~/.codex/token.sh.
+    # config.toml into the Secret Service keyring; the synced config has codex
+    # fetch them itself via [model_providers.<id>.auth] -> secret-tool lookup.
     if not config.is_file():
         return
     with config.open("rb") as f:
@@ -333,13 +333,39 @@ def save_codex_tokens(config: Path):
         )
 
 
+def check_codex_tokens():
+    # A missing keyring entry is not fatal for codex itself: it starts and then
+    # retries forever on "Reconnecting... waiting for network". Fail here with
+    # the fix instead.
+    missing = []
+    for name, (service, account) in CODEX_TOKEN_KEYRINGS.items():
+        found = subprocess.run(
+            ["secret-tool", "lookup", "service", service, "account", account],
+            capture_output=True,
+            text=True,
+        ).stdout
+        if not found.strip():
+            missing.append((name, service, account))
+    if missing:
+        lines = "\n".join(
+            f'  printf %s "TOKEN" | secret-tool store --label="codex {name} token"'
+            f" service {service} account {account}"
+            for name, service, account in missing
+        )
+        sys.exit("No token in the keyring for: " + ", ".join(n for n, _, _ in missing) + "\n" + lines)
+
+
 def install_codex():
     config = (CODEX_HOME / "config.toml").expanduser()
     save_codex_tokens(config)
 
+    check_codex_tokens()
+
     backup_and_link(CONFIGS / "codex-config.toml", config)
     backup_and_link(CONFIGS / "codex-hooks.json", (CODEX_HOME / "hooks.json").expanduser())
-    backup_and_link(CONFIGS / "codex-token.sh", (CODEX_HOME / "token.sh").expanduser())
+    # The model catalog codex is pointed at (model_catalog_json); without it
+    # codex refuses to start.
+    backup_and_link(CONFIGS / "codex-models.json", (CODEX_HOME / "models.json").expanduser())
     install_agent_hooks(CODEX_HOME / "hooks")
 
 

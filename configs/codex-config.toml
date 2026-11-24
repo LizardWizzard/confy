@@ -21,17 +21,19 @@ glob_scan_max_depth = 3
 [permissions.dev.network]
 enabled = true
 
-# Tokens live in the Secret Service keyring; codex fetches them by running
-# token.sh (installed from configs/codex-token.sh) when a bearer token is
-# needed. No secret is stored in this file or in the environment.
+# Tokens live in the Secret Service keyring; codex runs `secret-tool lookup`
+# itself when it needs a bearer token ([model_providers.<id>.auth]), so no
+# secret is stored in this file or in the environment. The command is spawned
+# directly: `~` is NOT expanded in `command`, hence a bare name resolved via
+# PATH rather than an absolute path under $HOME.
 [model_providers.ZAI]
 name = "ZAI"
 base_url = "https://api.z.ai/api/v1"
 wire_api = "responses"
 
 [model_providers.ZAI.auth]
-command = "/home/dr/.codex/token.sh"
-args = ["zai", "codex"]
+command = "secret-tool"
+args = ["lookup", "service", "zai", "account", "codex"]
 # Static API key: skip proactive refresh, re-run the command only on auth retry.
 refresh_interval_ms = 0
 
@@ -41,8 +43,8 @@ base_url = "https://api.aitunnel.ru/v1"
 wire_api = "responses"
 
 [model_providers.deepseek.auth]
-command = "/home/dr/.codex/token.sh"
-args = ["aitunnel", "codex"]
+command = "secret-tool"
+args = ["lookup", "service", "aitunnel", "account", "codex"]
 refresh_interval_ms = 0
 
 [projects."/home/dr/wrk/picodata/picodata"]
@@ -76,16 +78,19 @@ enabled = true
 [plugins."revdiff@revdiff"]
 enabled = true
 
+# Hook trust, keyed by the absolute path of hooks.json: only valid on a
+# machine whose home is /home/dr. Elsewhere codex asks to review the hooks once
+# (`/hooks`) and records the decision here, through the symlink.
 [hooks.state]
 
-[hooks.state."/home/dr/.codex/hooks.json:stop:0:0"]
-trusted_hash = "sha256:488cf28a02fe22016d834cefeafc4af1b376bb70f154742867767b6065608c16"
-
-[hooks.state."/home/dr/.codex/hooks.json:stop:0:1"]
-trusted_hash = "sha256:488cf28a02fe22016d834cefeafc4af1b376bb70f154742867767b6065608c16"
-
 [hooks.state."/home/dr/.codex/hooks.json:session_start:0:0"]
-trusted_hash = "sha256:70f838d9a94b320ee49d738fc6b2206a29a691cad64b9175fcb8e4aa904748e9"
+trusted_hash = "sha256:a777889016049002b2ce985b55b99831982ae15658edc8b7b943e7d195100811"
+
+[hooks.state."/home/dr/.codex/hooks.json:session_start:0:1"]
+trusted_hash = "sha256:602a8a5a97ad3c14c6521250eb63139462041a01406e5e827db747d0cbf1080c"
+
+[hooks.state."/home/dr/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:26c5c8467b159af4b0820f53fdcb5dba8606f06af5260e996636b95574947caf"
 
 [features]
 hooks = true

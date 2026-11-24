@@ -4,12 +4,12 @@
       {
         "hooks": [
           {
-            "command": "bash '/home/dr/.codex/herdr-agent-state.sh' session",
+            "command": "[ -f ~/.codex/herdr-agent-state.sh ] && bash ~/.codex/herdr-agent-state.sh session",
             "timeout": 10,
             "type": "command"
           },
           {
-            "command": "/home/dr/.codex/hooks/session-memlimit.sh codex",
+            "command": "~/.codex/hooks/session-memlimit.sh codex",
             "timeout": 10,
             "type": "command"
           }
@@ -20,7 +20,7 @@
       {
         "hooks": [
           {
-            "command": "bash '/home/dr/.codex/hooks/desktop-notify.sh' Stop",
+            "command": "bash ~/.codex/hooks/desktop-notify.sh Stop",
             "type": "command"
           }
         ]

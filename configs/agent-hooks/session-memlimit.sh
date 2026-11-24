@@ -53,7 +53,9 @@ if [ -z "$max" ]; then
   else max=10G; high=8G; swap=2G; fi
 fi
 
-CG="/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/${name}-limit"
+# The user's own slice, so the limit follows the uid instead of assuming 1000.
+uid=$(id -u 2>/dev/null) || exit 0
+CG="/sys/fs/cgroup/user.slice/user-${uid}.slice/user@${uid}.service/app.slice/${name}-limit"
 mkdir -p "$CG" 2>/dev/null || exit 0
 echo "$max" > "$CG/memory.max" 2>/dev/null || exit 0
 echo "$high" > "$CG/memory.high" 2>/dev/null
