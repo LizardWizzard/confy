@@ -269,6 +269,16 @@ def install_agent_hooks(hooks_dir: Path):
         backup_and_link(CONFIGS / "agent-hooks" / name, hooks_dir / name)
 
 
+def install_claude_skills(skills_dir: Path):
+    # One directory per skill under configs/claude-skills/<name>/SKILL.md,
+    # linked like the hook scripts.
+    skills_dir = skills_dir.expanduser()
+    run(f"mkdir -p {skills_dir}")
+    for skill_dir in sorted((CONFIGS / "claude-skills").iterdir()):
+        if (skill_dir / "SKILL.md").is_file():
+            backup_and_link(skill_dir, skills_dir / skill_dir.name)
+
+
 def save_claude_token(settings: Path):
     # The token lives in the Secret Service keyring (gnome-keyring on GNOME,
     # KWallet's Secret Service bridge on KDE). settings.json reaches it via
@@ -307,6 +317,7 @@ def install_claude():
 
     backup_and_link(CONFIGS / "claude-settings.json", settings)
     install_agent_hooks(CLAUDE_HOME / "hooks")
+    install_claude_skills(CLAUDE_HOME / "skills")
 
 
 def save_codex_tokens(config: Path):

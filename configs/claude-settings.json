@@ -141,7 +141,10 @@
       "Bash(rtk tree:*)",
       "Bash(rtk diff:*)",
       "Bash(rtk proxy grep:*)",
-      "Bash(rtk proxy git diff:*)"
+      "Bash(rtk proxy git diff:*)",
+      "Bash(rtk git diff:*)",
+      "Bash(rtk git show:*)",
+      "Bash(rtk git status:*)"
     ]
   },
   "theme": "dark",
