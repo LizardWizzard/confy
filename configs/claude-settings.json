@@ -3,7 +3,6 @@
   "env": {
     "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
     "API_TIMEOUT_MS": "3000000",
-    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "1000000",
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5.3[1m]",
     "ANTHROPIC_DEFAULT_OPUS_MODEL_NAME": "GLM-5.3",
     "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-5.3-flash[1m]",
@@ -15,31 +14,52 @@
     "pr": "",
     "sessionUrl": false
   },
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(rtk grep:*)",
+      "Bash(rtk ls:*)",
+      "Bash(rtk wc:*)",
+      "Bash(rtk find:*)",
+      "Bash(rtk tree:*)",
+      "Bash(rtk diff:*)",
+      "Bash(rtk proxy grep:*)",
+      "Bash(rtk proxy git diff:*)",
+      "Bash(rtk git diff:*)",
+      "Bash(rtk git show:*)",
+      "Bash(rtk git status:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)"
+    ]
+  },
   "model": "glm-5.4[1m]",
   "modelPicker": {
     "options": [
       {
         "model": "glm-5.4[1m]",
         "label": "GLM-5.4",
-        "description": "Z.ai newest \u00b7 multimodal \u00b7 1M context",
+        "description": "Z.ai newest · multimodal · 1M context",
         "behavesAs": "claude-opus-5-5"
       },
       {
         "model": "glm-5.3[1m]",
         "label": "GLM-5.3",
-        "description": "Z.ai flagship \u00b7 text-only \u00b7 1M context",
+        "description": "Z.ai flagship · text-only · 1M context",
         "behavesAs": "claude-opus-5-5"
       },
       {
         "model": "glm-5.3-flash[1m]",
         "label": "GLM-5.3-Flash",
-        "description": "Z.ai fast \u00b7 multimodal \u00b7 1M context",
+        "description": "Z.ai fast · multimodal · 1M context",
         "behavesAs": "claude-sonnet-5-5"
       },
       {
         "model": "glm-5.2[1m]",
         "label": "GLM-5.2",
-        "description": "Z.ai previous gen \u00b7 1M context",
+        "description": "Z.ai previous gen · 1M context",
         "behavesAs": "claude-sonnet-5-5"
       }
     ],
@@ -117,38 +137,6 @@
     "clangd-lsp@claude-plugins-official": false,
     "revdiff@revdiff": true
   },
-  "modelSettings": {
-    "claude-opus-5": {
-      "effortLevel": "high"
-    },
-    "claude-opus-5-5": {
-      "effortLevel": "high"
-    }
-  },
-  "tui": "fullscreen",
-  "preferredNotifChannel": "terminal_bell",
-  "inputNeededNotifEnabled": true,
-  "agentPushNotifEnabled": true,
-  "permissions": {
-    "allow": [
-      "Bash(grep:*)",
-      "Bash(ls:*)",
-      "Bash(wc:*)",
-      "Bash(rtk grep:*)",
-      "Bash(rtk ls:*)",
-      "Bash(rtk wc:*)",
-      "Bash(rtk find:*)",
-      "Bash(rtk tree:*)",
-      "Bash(rtk diff:*)",
-      "Bash(rtk proxy grep:*)",
-      "Bash(rtk proxy git diff:*)",
-      "Bash(rtk git diff:*)",
-      "Bash(rtk git show:*)",
-      "Bash(rtk git status:*)"
-    ]
-  },
-  "theme": "dark",
-  "effortLevel": "high",
   "extraKnownMarketplaces": {
     "revdiff": {
       "source": {
@@ -156,5 +144,25 @@
         "repo": "umputun/revdiff"
       }
     }
-  }
+  },
+  "effortLevel": "high",
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "high"
+    },
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    },
+    "glm-5.4": {
+      "effortLevel": "high"
+    },
+    "glm-5.3-flash": {
+      "autoCompactWindow": 300000
+    }
+  },
+  "tui": "fullscreen",
+  "theme": "dark",
+  "preferredNotifChannel": "terminal_bell",
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true
 }
