@@ -100,22 +100,4 @@ Open with one line: `Single-pass light review of <target>: N findings (B bugs,
 C names and comments).` The line tells the reader that one model ran every angle
 inline and re-checked each candidate, with no independent verifier subagents.
 
-**Report**
-
-Give each surviving finding a severity:
-
-- `important`: this change introduces the bug or makes it worse.
-- `pre_existing`: the bug was already there and the change only fails to fix it.
-- `nit`: a real bug that harms nobody, such as a misleading log line.
-
-Report at most 10 findings, most severe first. Never drop a finding to shorten
-the list without saying how many were left out. Use this form:
-
-    - `path:line` [severity] What goes wrong, as a user of the code would see
-      it. What triggers it. Fix: the change to make.
-
-Open with one line: `Single-pass light review of <target>: N findings.` The line
-tells the reader that one model ran every angle inline and re-checked each
-candidate, with no independent verifier subagents.
-
 If nothing survives, report `Nothing found.` and nothing else.
