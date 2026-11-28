@@ -56,6 +56,9 @@ trust_level = "trusted"
 [projects."/home/dr/wrk/picodata/picodata-third"]
 trust_level = "trusted"
 
+[projects."/home/dr/src/confy"]
+trust_level = "trusted"
+
 [tui]
 screen_reader_detection_done = true
 status_line = ["model-with-reasoning", "current-dir", "thread-name", "git-branch", "pull-request-number", "approval-mode", "context-used", "five-hour-limit", "weekly-limit", "used-tokens", "thread-title"]

@@ -136,13 +136,20 @@
     "rust-analyzer-lsp@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
     "clangd-lsp@claude-plugins-official": false,
-    "revdiff@revdiff": true
+    "revdiff@revdiff": true,
+    "codex@openai-codex": true
   },
   "extraKnownMarketplaces": {
     "revdiff": {
       "source": {
         "source": "github",
         "repo": "umputun/revdiff"
+      }
+    },
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
       }
     }
   },
