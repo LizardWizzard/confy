@@ -2,7 +2,6 @@ model = "glm-5.3"
 model_provider = "ZAI"
 forced_login_method = "api"
 model_reasoning_effort = "high"
-model_catalog_json = "~/.codex/models.json"
 
 # --- permissions baseline (Claude-like: work in the workspace, ask at the boundary) ---
 approval_policy = "on-request"
@@ -22,21 +21,26 @@ glob_scan_max_depth = 3
 enabled = true
 
 # Tokens live in the Secret Service keyring; codex runs `secret-tool lookup`
-# itself when it needs a bearer token ([model_providers.<id>.auth]), so no
-# secret is stored in this file or in the environment. The command is spawned
-# directly: `~` is NOT expanded in `command`, hence a bare name resolved via
-# PATH rather than an absolute path under $HOME.
+# itself when it needs a bearer token, so no secret is stored in this file or
+# in the environment. The command is spawned directly: `~` is NOT expanded in
+# `command`, hence a bare name resolved via PATH rather than an absolute path
+# under $HOME.
 [model_providers.ZAI]
 name = "ZAI"
 base_url = "https://api.z.ai/api/v1"
 wire_api = "responses"
+# Z.ai serves its own codex catalog, so the GLM models need no local file and
+# follow the provider's list. Codex takes the token for that URL from
+# gateway_oauth.credential_export below and sends it to model requests too, so
+# this provider has no `auth` table (the two would both claim Authorization).
+model_catalog_url = "https://api.z.ai/api/v1/models"
 
-[model_providers.ZAI.auth]
+[model_providers.ZAI.gateway_oauth.credential_export]
 command = "secret-tool"
 args = ["lookup", "service", "zai", "account", "codex"]
-# Static API key: skip proactive refresh, re-run the command only on auth retry.
-refresh_interval_ms = 0
 
+# aitunnel serves no codex catalog, so the DeepSeek models come from a file
+# that belongs to a config layer: `codex -p deepseek` (deepseek.config.toml).
 [model_providers.deepseek]
 name = "deepseek"
 base_url = "https://api.aitunnel.ru/v1"
@@ -98,5 +102,10 @@ trusted_hash = "sha256:26c5c8467b159af4b0820f53fdcb5dba8606f06af5260e996636b9557
 [features]
 hooks = true
 
+# Codex loads one model catalog. This file and `codex -p deepseek` use the
+# Z.ai catalog and a DeepSeek file; a local catalog overrides the remote one,
+# so each one sits in its own config layer.
+#
 # Machine-local overrides (default model/provider, llama-swap, model catalogs,
-# MCP servers) belong in ~/.codex/local.config.toml - never in this file.
+# MCP servers) belong in ~/.codex/local.config.toml (`codex -p local`) - never
+# in this file.

@@ -374,9 +374,10 @@ def install_codex():
 
     backup_and_link(CONFIGS / "codex-config.toml", config)
     backup_and_link(CONFIGS / "codex-hooks.json", (CODEX_HOME / "hooks.json").expanduser())
-    # The model catalog codex is pointed at (model_catalog_json); without it
-    # codex refuses to start.
-    backup_and_link(CONFIGS / "codex-models.json", (CODEX_HOME / "models.json").expanduser())
+    # Z.ai serves its own catalog (model_catalog_url in the provider). The
+    # DeepSeek models come from a file, used by the `codex -p deepseek` layer.
+    backup_and_link(CONFIGS / "codex-deepseek.config.toml", (CODEX_HOME / "deepseek.config.toml").expanduser())
+    backup_and_link(CONFIGS / "codex-models-deepseek.json", (CODEX_HOME / "models-deepseek.json").expanduser())
     install_agent_hooks(CODEX_HOME / "hooks")
 
 

@@ -1,0 +1,5 @@
+# `codex -p deepseek`: the DeepSeek models of aitunnel, layered on config.toml.
+model = "deepseek-v4-flash"
+model_provider = "deepseek"
+# A local catalog replaces the Z.ai one, so it sits in this layer only.
+model_catalog_json = "~/.codex/models-deepseek.json"
