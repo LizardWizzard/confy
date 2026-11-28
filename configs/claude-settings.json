@@ -28,6 +28,7 @@
       "Bash(rtk proxy grep:*)",
       "Bash(rtk proxy git diff:*)",
       "Bash(rtk git diff:*)",
+      "Bash(rtk git log:*)",
       "Bash(rtk git show:*)",
       "Bash(rtk git status:*)"
     ],
